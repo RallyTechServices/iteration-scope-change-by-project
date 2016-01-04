@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iteration Scope Change</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Mon Jan 04 2016 12:04:26 GMT-0700 (MST) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Mon Jan 04 2016 12:04:26 GMT-0700 (MST)";
+        var CHECKSUM = 10677303354;
+    </script>
+    
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+             
+/**
+ * A link that pops up a version dialog box
+ */
+
+Ext.define('Rally.technicalservices.InfoLink',{
+    extend: 'Rally.ui.dialog.Dialog',
+    alias: 'widget.tsinfolink',
+    
+    /**
+     * @cfg {String} informationHtml
+     * Additional text to be displayed on the popup dialog (for exmaple,
+     * to add a description of the app's use or functionality)
+     */
+    informationHtml: null,
+    
+    /**
+     * 
+     * cfg {String} title
+     * The title for the dialog box
+     */
+    title: "Build Information",
+    
+    defaults: { padding: 5, margin: 5 },
+
+    closable: true,
+     
+    draggable: true,
+
+    autoShow: true,
+   
+    width: 350, 
+    
+    initComponent: function() {
+        var id = Ext.id(this);
+        this.title =  "<span class='icon-help'> </span>" + this.title;
+        this.callParent(arguments);
+    },
+    
+    _generateChecksum: function(string){
+        var chk = 0x12345678,
+            i;
+        string = string.replace(/var CHECKSUM = .*;/,"");
+        string = string.replace(/\s/g,"");  //Remove all whitespace from the string.
+        
+        for (i = 0; i < string.length; i++) {
+            chk += (string.charCodeAt(i) * i);
+        }
+    
+        return chk;
+    },
+    
+    _checkChecksum: function(container) {
+        var deferred = Ext.create('Deft.Deferred');
+        console.log("_checkChecksum", container);
+        var me = this;
+        
+        Ext.Ajax.request({
+            url: document.URL,
+            params: {
+                id: 1
+            },
+            success: function (response) {
+                text = response.responseText;
+                if ( CHECKSUM ) {
+                    if ( CHECKSUM !== me._generateChecksum(text) ) {
+                        console.log("Checksums don't match!");
+                        deferred.resolve(false);
+                        return;
+                    }
+                }
+                deferred.resolve(true);
+            }
+        });
+        
+        return deferred.promise;
+    },
+    
+    afterRender: function() {
+        var app = Rally.getApp();
+        
+        if (! app.isExternal() ) {
+                
+            this._checkChecksum(app).then({
+                scope: this,
+                success: function(result){
+                    if ( !result ) {
+                        this.addDocked({
+                            xtype:'container',
+                            cls: 'build-info',
+                            padding: 2,
+                            html:'<span class="icon-warning"> </span>Checksums do not match'
+                        });
+                    }
+                },
+                failure: function(msg){
+                    console.log("oops:",msg);
+                }
+            });
+        } else {
+            this.addDocked({
+                xtype:'container',
+                cls: 'build-info',
+                padding: 2,
+                html:'... Running externally'
+            });
+        }
+        this.callParent(arguments);
+    },
+    
+    beforeRender: function() {
+        var me = this;
+        this.callParent(arguments);
+
+        if (this.informationHtml) {
+            this.addDocked({
+                xtype: 'component',
+                componentCls: 'intro-panel',
+                padding: 2,
+                html: this.informationHtml
+            });
+        }
+        
+        this.addDocked({
+            xtype:'container',
+            cls: 'build-info',
+            padding: 2,
+            html:"This app was created by the Rally Technical Services Team."
+        });
+        
+        if ( APP_BUILD_DATE ) {
+            this.addDocked({
+                xtype:'container',
+                cls: 'build-info',
+                padding: 2,
+                html:'Build date/time: ' + APP_BUILD_DATE
+            });
+        }
+    }
+});
+
+/*
+ */
+Ext.define('Rally.technicalservices.Logger',{
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    log: function(args){
+        var timestamp = "[ " + Ext.util.Format.date(new Date(), "Y-m-d H:i:s.u") + " ]";
+        //var output_args = arguments;
+        //output_args.unshift( [ "[ " + timestamp + " ]" ] );
+        //output_args = Ext.Array.push(output_args,arguments);
+        
+        var output_args = [];
+        output_args = Ext.Array.push(output_args,[timestamp]);
+        output_args = Ext.Array.push(output_args, Ext.Array.slice(arguments,0));
+
+        window.console && console.log.apply(console,output_args);
+    }
+
+});
+
+Ext.define('Rally.technicalservices.IterationScopeChange.AggregateDataTemplate',{
+    extend: 'Ext.XTemplate',
+
+    constructor: function(config) {
+        var templateConfig = [
+            '<tpl><table><tr>',
+            '<td width=20></td><td width=140></td><th width=50 align=left><b>Count</th>',
+            '<th width=100 align=left><b>{planEstimateLabel}</b></th>',
+            '<tr><td width=20 align=right><img src="/slm/mashup/1.11/images/plus.gif"></td>',
+            '<th width=140 align=left>Total Added </th>',
+            '<td width=50 align=left>{added}</td>',
+            '<td width=100 align=left>{[this.getAddedEstimate(values)]}',
+            '</td></tr><tr><td width=20 align=right><img src="/slm/mashup/1.11/images/minus.gif"></td>',
+            '<th width=140 align=left>   Total Removed </th>',
+            '<td width=50 align=left>{removed}</td>',
+            '<td width=100 align=left>{[this.getRemovedEst(values)]}',
+            '</td></tr><tr><td width=20 align=right></td>',
+            '<th width=140 align=left><b>Net </b></th>',
+            '<td width=50 align=left><b>{net}</b></td>',
+            '<td width=100 align=left><b>{[this.getNetEst(values)]}',
+            '</b></td></tr></table></tpl>',
+            {
+                getRemovedEst: function(recordData){
+                    return 30;
+                },
+                getAddedEst: function(recordData) {
+                    return 20;
+                },
+                getNetEst: function(recordData){
+                    return 10;
+                }
+            },
+            config
+        ];
+
+        return this.callParent(templateConfig);
+    }
+});
+
+Ext.define("iteration-scope-change-with-export", {
+    extend: 'Rally.app.TimeboxScopedApp',
+    componentCls: 'app',
+    logger: new Rally.technicalservices.Logger(),
+    scopeType: 'iteration',
+
+    //onScopeChange: function(timebox){
+    //    this._addComponents(timebox);
+    //    this._updateIterationStatus(timebox);
+    //},
+    onTimeboxScopeChange: function(timebox){
+        this.logger.log('onTimeboxScopeChange', timebox.getQueryFilter().toString());
+        this.getContext().setTimeboxScope(timebox);
+
+        this._addComponents(timebox);
+
+        this._loadMatchingIterations(timebox);
+
+        //this._updateApp(timebox);
+    },
+    _addComponents: function(timebox){
+        this.logger.log('_runApp', timebox);
+
+        var labelWidth = 100;
+
+        if (!this.down('#iterationStatusTemplate')){
+            this.add(this._getIterationStatusTemplate());
+        };
+
+        if (!this.down('#selectedShowWorkScope')){
+            this.add(this._getShowWorkRadioGroupConfig(labelWidth));
+        }
+        if (!this.down('#selectedOrganizeBy')){
+            this.add(this._getOrganizeByType(labelWidth));
+        }
+
+    },
+    _getShowWorkRadioGroupConfig: function(labelWidth){
+
+        return {
+            xtype: 'radiogroup',
+            fieldLabel: 'Show Work',
+            columns: 3,
+            itemId: 'selectedShowWorkScope',
+            allowBlank: false,
+            vertical: false,
+            labelWidth: labelWidth,
+            margin: '10 0 10 0',
+            items: [{
+                boxLabel: "All",
+                inputValue: 'all',
+                name: 'showWorkScope',
+                disabled: false,
+                checked: true
+            },{
+                boxLabel: "Added",
+                name: 'showWorkScope',
+                inputValue: 'added',
+                disabled: false,
+                checked: false
+
+            },{
+                boxLabel: "Removed",
+                name: 'showWorkScope',
+                inputValue: 'removed',
+                disabled: false,
+                checked: false
+
+            }],
+            listeners: {
+                scope: this,
+                change: this._updateApp
+            }
+        };
+    },
+    _getOrganizeByType: function(labelWidth){
+        return {
+            xtype: 'radiogroup',
+            fieldLabel: 'Organize By',
+            itemId: 'selectedOrganizeBy',
+            columns: 3,
+            allowBlank: false,
+            vertical: false,
+            labelWidth: labelWidth,
+            margin: '10 0 10 0',
+            items: [{
+                boxLabel: "Project",
+                inputValue: 'Project',
+                name: 'organizeBy',
+                disabled: false,
+                checked: true
+            },{
+                boxLabel: "Day",
+                inputValue: 'Day',
+                name: 'organizeBy',
+                disabled: false,
+                checked: false
+
+            }],
+            listeners: {
+                scope: this,
+                change: this._updateApp
+            }
+        };
+    },
+    _loadMatchingIterations: function(timebox){
+        if (!timebox || !timebox.getRecord()){
+            //Todo add message that there is no selected iteration;
+            this.logger.log('_loadMatchingIterations no timebox selected');
+            return;
+        }
+
+        this.logger.log('_loadScopeRevisions', timebox.getQueryFilter().toString());
+
+        var store = Ext.create('Rally.data.wsapi.Store',{
+            model: 'Iteration',
+            filters: timebox.getQueryFilter().toString(),
+            fetch: ['StartDate','Name','EndDate','RevisionHistory','Project'],
+            limit: 'Infinity'
+        });
+        store.load({
+            callback: this._loadScopeRevisions,
+            scope: this
+        });
+
+    },
+    _loadScopeRevisions: function(records, operation){
+        var deferred = Ext.create('Deft.Deferred'),
+            promises = [];
+
+        if (!operation.wasSuccessful()){
+            this.logger.log('_loadMatchingIterations failed', operation)
+            //Todo alert the user and put a message up
+            return;
+        }
+
+        if (records.length === 0){
+            this.logger.log('_loadScopeRevisions 0 records');
+            return;
+        }
+
+        _.each(records, function(r){
+            promises.push(this._fetchHistory(r));
+        }, this);
+
+        Deft.Promise.all(promises).then({
+            success: function(revisions){
+                this.logger.log('_loadScopeRevisions success', revisions);
+                this._updateApp(records, revisions);
+            },
+            failure: function(msg){
+                this.logger.log('_loadScopeRevisions failure', msg);
+            },
+            scope: this
+        });
+
+        return deferred;
+
+    },
+    _fetchHistory: function(record){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var filter = Ext.create('Rally.data.wsapi.Filter',{
+            property:"RevisionHistory",
+            value: record.get('RevisionHistory')._ref
+        });
+
+        var store = Ext.create('Rally.data.wsapi.Store',{
+            model:'Revision',
+            filters: filter,
+            fetch: ['Description','CreationDate','User'],
+            sorters: [{property:'CreationDate',direction:'ASC'}]
+        });
+
+        store.load({
+            callback: function(records, operation){
+                if (operation.wasSuccessful()){
+                    deferred.resolve(records);
+                } else {
+                    deferred.reject(operation.error.errors.join(','));
+                }
+            }
+        });
+        return deferred;
+    },
+    _updateApp: function(records, revisions){
+        var timebox = this.getContext().getTimeboxScope(),
+            showWorkScope = this.down('#selectedShowWorkScope').getValue().showWorkScope,
+            organizeBy = this.down('#selectedOrganizeBy').getValue().organizeBy;
+        this.logger.log('_updateApp', showWorkScope, organizeBy);
+
+        this._updateIterationStatus(timebox);
+
+        var parser = Ext.create('Rally.technicalservices.TimeboxHistoryParser',{}),
+            activityData = parser.getTimeboxActivityData(records, revisions);
+
+        var artifactFormattedIds = _.pluck(activityData, 'FormattedID');
+
+        this._fetchArtifactData(artifactFormattedIds).then({
+            success: function(artifacts){
+                var data = parser.aggregateArtifactData(activityData, artifacts);
+                this._buildGrid(data, organizeBy);
+            },
+            failure: function(msg){},
+            scope: this
+        });
+
+
+
+    },
+    _buildGrid: function(data, organizeBy){
+        if (organizeBy !== 'Day' && organizeBy !== 'Project'){
+            organizeBy = 'Day';
+        }
+
+        this.logger.log('_buildGrid', data, organizeBy, this._getColumnCfgs());
+        var store = Ext.create('Rally.data.custom.Store', {
+            data: data,
+            groupField: organizeBy,
+            groupDir: 'ASC'
+        });
+        this.add({
+            xtype: 'rallygrid',
+            features: [{
+                ftype: 'groupingsummary',
+                groupHeaderTpl: '{name} ({rows.length})'
+            }],
+            store: store,
+            columnCfgs: this._getColumnCfgs()
+        });
+
+    },
+    _getColumnCfgs: function(){
+        return [{
+            text: 'Status',
+            dataIndex: 'Status',
+            flex: 1
+            },{
+            text: 'FormattedID',
+            dataIndex: 'FormattedID',
+            flex: 1
+        },{
+            text: 'Name',
+            dataIndex: 'Name',
+            flex: 2
+        },{
+            text: 'Project',
+            dataIndex: 'Project',
+            flex: 1
+        },{
+            text: 'Day',
+            dataIndex: 'Day',
+            flex: 1
+        },{
+            text: 'Parent',
+            dataIndex: 'Parent',
+            flex: 1
+        },{
+            text: 'PlanEstimate',
+            dataIndex: 'PlanEstimate',
+            flex: 1
+        },{
+            text: 'User',
+            dataIndex: 'User',
+            flex: 1
+        }];
+    },
+    _fetchArtifactData: function(artifactFormattedIds){
+        var deferred = Ext.create('Deft.Deferred'),
+            filters = Rally.data.wsapi.Filter.or(_.map(artifactFormattedIds, function(fid){ return {property: 'FormattedID', value: fid }; }));
+
+
+        Ext.create('Rally.data.wsapi.artifact.Store', {
+            models: ['Defect', 'DefectSuite', 'UserStory','TestSet'],
+            fetch: ['FormattedID','Name','Parent','PortfolioItem','Requirement','PlanEstimate'],
+            filters: filters,
+            limit: 'Infinity'
+        }).load({
+            callback: function(records, operation){
+                deferred.resolve(records);
+            },
+            scope: this
+        });
+
+        return deferred;
+    },
+    _getIterationStatusTemplate: function(){
+        var iterationTemplate = Ext.create('Rally.technicalservices.IterationStatusTemplate',{});
+        this.add({
+            xtype: 'container',
+            flex: 1,
+            tpl: iterationTemplate,
+            itemId: 'iterationStatusTemplate'
+        });
+    },
+    _updateIterationStatus: function(timebox){
+        var data = timebox && timebox.getRecord() && timebox.getRecord().getData() || {};
+        this.down('#iterationStatusTemplate').update(data);
+
+    },
+    getOptions: function() {
+        return [
+            {
+                text: 'About...',
+                handler: this._launchInfo,
+                scope: this
+            }
+        ];
+    },
+    
+    _launchInfo: function() {
+        if ( this.about_dialog ) { this.about_dialog.destroy(); }
+        this.about_dialog = Ext.create('Rally.technicalservices.InfoLink',{});
+    },
+    
+    isExternal: function(){
+        return typeof(this.getAppId()) == 'undefined';
+    },
+    
+    //onSettingsUpdate:  Override
+    onSettingsUpdate: function (settings){
+        this.logger.log('onSettingsUpdate',settings);
+        Ext.apply(this, settings);
+        this.launch();
+    }
+});
+
+Ext.define('Rally.technicalservices.IterationScopeChangeConfiguration',{
+    singleton: true,
+
+    aggregateByOptions: {
+        DAY: 'day',
+        PROJECT: 'project'
+    }
+});
+
+Ext.define('Rally.technicalservices.IterationStatusTemplate',{
+    extend: 'Ext.XTemplate',
+
+    constructor: function(config) {
+        var templateConfig = [
+            '<tpl if="this.isNotEmpty(values)">',
+            '<div class="timeInState">{Name} ({[this.getDuration(values)]} Days, {[this.getStatus(values)]})</div>',
+            '</tpl>',
+            {
+                isNotEmpty: function(recordData){
+                    if (recordData && recordData.Name && recordData.EndDate && recordData.StartDate){
+                        return true;
+                    }
+
+                    return false;
+                },
+                getStatus: function(recordData) {
+                    var today = new Date();
+
+                    if (recordData.EndDate < today){
+                        return "Done";
+                    }
+
+                    if (recordData.StartDate > today){
+                        return "Not Started";
+                    }
+
+                    return this.getRemainingDays(recordData) + " Days remaining";
+                },
+                getRemainingDays: function(recordData){
+                    return Rally.util.DateTime.getDifference(recordData.EndDate, new Date(), 'day');
+                },
+                getDuration: function(recordData){
+                    return Rally.util.DateTime.getDifference(recordData.EndDate, recordData.StartDate, 'day');
+                }
+            },
+            config
+        ];
+
+        return this.callParent(templateConfig);
+    }
+});
+
+Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
+    extend: 'Ext.Base',
+
+    mixins: {
+        observable: 'Ext.util.Observable'
+    },
+
+    historyRecords: undefined,
+    timeboxRecords: undefined,
+    prefixes: undefined,
+    aggregateBy: undefined,
+
+    constructor: function (config) {
+        this.mixins.observable.constructor.call(this, config);
+    },
+    getTimeboxActivityData: function(timeboxRecords, historyRecords){
+        var activityData = [];
+
+        for (var i = 0; i < timeboxRecords.length; i++) {
+            var revisions = historyRecords[i],
+                record = timeboxRecords[i];
+
+            _.each(revisions, function (rev) {
+                console.log('revisions', rev);
+                var dataDate = Rally.util.DateTime.fromIsoString(rev.get('CreationDate')),
+                    endDate = Rally.util.DateTime.fromIsoString(record.get('EndDate')),
+                    startDate = Rally.util.DateTime.fromIsoString(record.get('StartDate')),
+                    description = rev.get('Description');
+
+                endDate.setHours(23, 59, 59, 0);
+
+                if (/Scheduled|Unscheduled/.test(description) &&
+                    dataDate >= startDate && dataDate <= endDate) {
+
+                    var splitRevision = description.split(',');
+                    for (var num = 0; num < splitRevision.length; num++) {
+
+                        var action = this._getAction(splitRevision[num]);
+                        if (action) {
+
+                            var formattedId = this._getFormattedID(splitRevision[num]);
+
+                            if (formattedId !== null) {
+                                var wasDeleted = this._getWasDeleted(description);
+
+                                activityData.push({
+                                    Status: action,
+                                    FormattedID: formattedId,
+                                    User: rev.get('User')._refObjectName,
+                                    CreationDate: dataDate,
+                                    Project: record.get('Project').Name,
+                                    isDeleted: wasDeleted,
+                                    Name: null,
+                                    Day: Rally.util.DateTime.formatWithDefault(dataDate),
+                                    Parent: null,
+                                    PlanEstimate: null
+                                });
+                            }
+                        }
+                    }
+                }
+            }, this);
+        }
+        return activityData;
+    },
+
+    aggregateArtifactData: function(activityData, artifacts){
+
+        var artifactHash = {};
+        _.each(artifacts, function(a){
+            artifactHash[a.get('FormattedID')] = a;
+        });
+
+        _.each(activityData, function(obj){
+            obj.isDeleted = false;
+            var artifact = artifactHash[obj.FormattedID] || null;
+            if (artifact){
+                obj.Name = artifact.get('Name');
+                obj.Parent = artifact.get('Parent') && artifact.get('Parent')._ref || artifact.get('PortfolioItem') && artifact.get('PortfolioItem')._ref || artifact.get('Requirement') && artifact.get('Requirement')._ref || null;
+                obj.PlanEstimate = artifact.get('PlanEstimate') || null;
+
+            } else {
+                obj.isDeleted = true;
+                obj.Name = "<i>Deleted</i>"
+            }
+        });
+        return activityData;
+    },
+    _getPrefix: function(formattedID){
+        return formattedID.replace(/[0-9]/g, "");
+    },
+    _getWasDeleted: function(description){
+        if (/Unscheduled/.test(description) && /\(Moved to Recycle Bin\)]$/.test(description)) {
+            return true;
+        }
+        return false;
+    },
+    _getAction: function (description) {
+        if (/Unscheduled/.test(description)) {
+            return "Removed";
+        }
+
+        if (/Scheduled/.test(description)) {
+            return "Added";
+        }
+        return null;
+    },
+    _getFormattedID: function(description){
+        var artifactName = description.split("[");
+
+        if (typeof artifactName[1] === 'undefined') {
+            artifactName = description.split(":");
+        }
+
+        if (typeof artifactName[1] === 'undefined') {
+            return null;
+        }
+
+        var formattedID = artifactName[1].split(":");
+        formattedID = formattedID[0].replace(/^\s*|\s*$/g, '');
+
+        return formattedID;
+    },
+
+
+});
+            
+               Rally.launchApp('iteration-scope-change-with-export', {
+                   name: 'Iteration Scope Change'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+    </style>
+
+</head>
+<body></body>
+</html>
