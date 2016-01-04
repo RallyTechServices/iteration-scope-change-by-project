@@ -4,7 +4,7 @@ Ext.define('Rally.technicalservices.IterationStatusTemplate',{
     constructor: function(config) {
         var templateConfig = [
             '<tpl if="this.isNotEmpty(values)">',
-            '<div class="timeInState">{Name} ({[this.getDuration(values)]} Days, {[this.getStatus(values)]})</div>',
+            '<div class="iterationinfo">{Name} ({[this.getDuration(values)]} Days, {[this.getStatus(values)]})</div>',
             '</tpl>',
             {
                 isNotEmpty: function(recordData){

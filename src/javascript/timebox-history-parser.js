@@ -58,7 +58,7 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                                     Name: null,
                                     Day: Rally.util.DateTime.formatWithDefault(dataDate),
                                     Parent: null,
-                                    PlanEstimate: null
+                                    PlanEstimate: 0
                                 });
                             }
                         }
@@ -88,9 +88,10 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
             obj.isDeleted = false;
             var artifact = artifactHash[obj.FormattedID] || null;
             if (artifact){
+                obj._ref = artifact.get('_ref');
                 obj.Name = artifact.get('Name');
-                obj.Parent = artifact.get('Parent') && artifact.get('Parent')._ref || artifact.get('PortfolioItem') && artifact.get('PortfolioItem')._ref || artifact.get('Requirement') && artifact.get('Requirement')._ref || null;
-                obj.PlanEstimate = artifact.get('PlanEstimate') || null;
+                obj.Parent = artifact.get('Parent') || artifact.get('PortfolioItem') || artifact.get('Requirement') || null;
+                obj.PlanEstimate = artifact.get('PlanEstimate') || 0;
 
             } else {
                 obj.isDeleted = true;

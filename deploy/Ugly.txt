@@ -3,10 +3,10 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Jan 04 2016 12:59:17 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Jan 04 2016 13:59:03 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Jan 04 2016 12:59:17 GMT-0700 (MST)";
+        var APP_BUILD_DATE = "Mon Jan 04 2016 13:59:03 GMT-0700 (MST)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -40,6 +40,28 @@
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+
+.iterationinfo{
+    color: #222222;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 12px;
+    padding-top: 5px;
+}
+
+.added {
+    color: green;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
+}
+.removed {
+    color: red;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
 }
     </style>
 

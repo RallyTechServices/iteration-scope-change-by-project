@@ -15,3 +15,25 @@
     margin-right: 5px;
     cursor: pointer;
 }
+
+.iterationinfo{
+    color: #222222;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 12px;
+    padding-top: 5px;
+}
+
+.added {
+    color: green;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
+}
+.removed {
+    color: red;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
+}

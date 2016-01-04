@@ -48,17 +48,21 @@ Ext.define("iteration-scope-change-with-export", {
             vertical: false,
             labelWidth: labelWidth,
             margin: '10 0 10 0',
+            padding: 5,
+            labelAlign: 'right',
             items: [{
                 boxLabel: "All",
                 inputValue: 'all',
                 name: 'showWorkScope',
                 disabled: false,
+                margin: '0 10 0 10',
                 checked: true
             },{
                 boxLabel: "Added",
                 name: 'showWorkScope',
                 inputValue: 'added',
                 disabled: false,
+                margin: '0 10 0 10',
                 checked: false
 
             },{
@@ -66,6 +70,7 @@ Ext.define("iteration-scope-change-with-export", {
                 name: 'showWorkScope',
                 inputValue: 'removed',
                 disabled: false,
+                margin: '0 10 0 10',
                 checked: false
 
             }],
@@ -85,9 +90,12 @@ Ext.define("iteration-scope-change-with-export", {
             vertical: false,
             labelWidth: labelWidth,
             margin: '10 0 10 0',
+            padding: 5,
+            labelAlign: 'right',
             items: [{
                 boxLabel: "Project",
                 inputValue: 'Project',
+                margin: '0 10 0 10',
                 name: 'organizeBy',
                 disabled: false,
                 checked: true
@@ -96,6 +104,7 @@ Ext.define("iteration-scope-change-with-export", {
                 inputValue: 'Day',
                 name: 'organizeBy',
                 disabled: false,
+                margin: '0 10 0 10',
                 checked: false
 
             }],
@@ -243,7 +252,8 @@ Ext.define("iteration-scope-change-with-export", {
         var store = Ext.create('Rally.data.custom.Store', {
             data: data,
             groupField: organizeBy,
-            groupDir: 'ASC'
+            groupDir: 'ASC',
+            pageSize: data.length
         });
         this.add({
             xtype: 'rallygrid',
@@ -251,6 +261,7 @@ Ext.define("iteration-scope-change-with-export", {
                 ftype: 'groupingsummary',
                 groupHeaderTpl: '{name} ({rows.length})'
             }],
+            showPagingToolbar: false,
             store: store,
             columnCfgs: this._getColumnCfgs()
         });
@@ -260,11 +271,27 @@ Ext.define("iteration-scope-change-with-export", {
         return [{
             text: 'Status',
             dataIndex: 'Status',
-            flex: 1
+            flex: 1,
+            renderer: function(value){
+                if (value === 'Added'){
+                    return '<span class="added"><b>+</b></span>';
+                }
+                if (value === 'Removed'){
+                    return '<span class="removed"><b>-</b></span>';
+                }
+                return '';
+            }
             },{
             text: 'FormattedID',
             dataIndex: 'FormattedID',
-            flex: 1
+            flex: 1,
+            renderer: function (value, metaData, record) {
+                if (record.get('_ref')){
+                    return Ext.create('Rally.ui.renderer.template.FormattedIDTemplate',{}).apply(record.data);
+                }
+                return value;
+
+            }
         },{
             text: 'Name',
             dataIndex: 'Name',
@@ -272,7 +299,7 @@ Ext.define("iteration-scope-change-with-export", {
         },{
             text: 'Project',
             dataIndex: 'Project',
-            flex: 1
+            flex: 2
         },{
             text: 'Day',
             dataIndex: 'Day',
@@ -280,7 +307,14 @@ Ext.define("iteration-scope-change-with-export", {
         },{
             text: 'Parent',
             dataIndex: 'Parent',
-            flex: 1
+            flex: 3,
+            renderer: function (value, metaData, record) {
+                if (record.get('Parent')){
+                    return Ext.create('Rally.ui.renderer.template.ParentTemplate').apply(record.data);
+                }
+                return '';
+
+            }
         },{
             text: 'PlanEstimate',
             dataIndex: 'PlanEstimate',
@@ -316,7 +350,8 @@ Ext.define("iteration-scope-change-with-export", {
             xtype: 'container',
             flex: 1,
             tpl: iterationTemplate,
-            itemId: 'iterationStatusTemplate'
+            itemId: 'iterationStatusTemplate',
+            margin: 15
         });
     },
     _updateIterationStatus: function(timebox){
