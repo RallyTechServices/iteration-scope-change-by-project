@@ -4,22 +4,24 @@ Ext.define("iteration-scope-change-with-export", {
     logger: new Rally.technicalservices.Logger(),
     scopeType: 'iteration',
 
-    //onScopeChange: function(timebox){
-    //    this._addComponents(timebox);
-    //    this._updateIterationStatus(timebox);
-    //},
     onTimeboxScopeChange: function(timebox){
         this.logger.log('onTimeboxScopeChange', timebox.getQueryFilter().toString());
         this.getContext().setTimeboxScope(timebox);
 
         this._addComponents(timebox);
 
+        this._clearData();
         this._loadMatchingIterations(timebox);
-
-        //this._updateApp(timebox);
     },
+    _clearData: function(){
+        this.timeboxParser = null;
+        if (this.down('rallygrid')){
+            this.down('rallygrid').destroy();
+        }
+    },
+
     _addComponents: function(timebox){
-        this.logger.log('_runApp', timebox);
+        this.logger.log('_addComponents', timebox);
 
         var labelWidth = 100;
 
@@ -110,11 +112,27 @@ Ext.define("iteration-scope-change-with-export", {
             return;
         }
 
-        this.logger.log('_loadScopeRevisions', timebox.getQueryFilter().toString());
+        var filters = [{
+            property: 'Name',
+            value: timebox.getRecord().get('Name')
+        },{
+            property: 'StartDate',
+            value: timebox.getRecord().get('StartDate')
+        },{
+            property: 'EndDate',
+            value: timebox.getRecord().get('EndDate')
+        }];
+
+        this.logger.log('_loadScopeRevisions', filters);
 
         var store = Ext.create('Rally.data.wsapi.Store',{
             model: 'Iteration',
-            filters: timebox.getQueryFilter().toString(),
+            filters: filters,
+            context: {
+                project: this.getContext().getProject()._ref,
+                projectScopeDown: this.getContext().getProjectScopeDown(),
+                projectScopeUp: false
+            },
             fetch: ['StartDate','Name','EndDate','RevisionHistory','Project'],
             limit: 'Infinity'
         });
@@ -125,15 +143,14 @@ Ext.define("iteration-scope-change-with-export", {
 
     },
     _loadScopeRevisions: function(records, operation){
-        var deferred = Ext.create('Deft.Deferred'),
-            promises = [];
+        var promises = [];
 
         if (!operation.wasSuccessful()){
             this.logger.log('_loadMatchingIterations failed', operation)
             //Todo alert the user and put a message up
             return;
         }
-
+        this.logger.log('_loadMatchingIterations', records, operation);
         if (records.length === 0){
             this.logger.log('_loadScopeRevisions 0 records');
             return;
@@ -146,16 +163,32 @@ Ext.define("iteration-scope-change-with-export", {
         Deft.Promise.all(promises).then({
             success: function(revisions){
                 this.logger.log('_loadScopeRevisions success', revisions);
-                this._updateApp(records, revisions);
+                this.timeboxParser = Ext.create('Rally.technicalservices.TimeboxHistoryParser',{
+                    timeboxRecords: records,
+                    historyRecords: revisions
+                });
+                var formattedIDs = this.timeboxParser.getArtifactFormattedIDs();
+
+                this.logger.log('parsed histories', this.timeboxParser, formattedIDs);
+                if (formattedIDs.length > 0){
+                    this._fetchArtifactData(this.timeboxParser.getArtifactFormattedIDs()).then({
+                        success: function(artifacts){
+                            this.timeboxParser.aggregateArtifactData(artifacts);
+                            this._updateApp();
+                        },
+                        failure: function(msg){},
+                        scope: this
+                    });
+                } else {
+                    this._updateApp();
+                }
+
             },
             failure: function(msg){
                 this.logger.log('_loadScopeRevisions failure', msg);
             },
             scope: this
         });
-
-        return deferred;
-
     },
     _fetchHistory: function(record){
         var deferred = Ext.create('Deft.Deferred');
@@ -164,7 +197,7 @@ Ext.define("iteration-scope-change-with-export", {
             property:"RevisionHistory",
             value: record.get('RevisionHistory')._ref
         });
-
+        this.logger.log('_fetchHistory', filter.toString());
         var store = Ext.create('Rally.data.wsapi.Store',{
             model:'Revision',
             filters: filter,
@@ -183,29 +216,22 @@ Ext.define("iteration-scope-change-with-export", {
         });
         return deferred;
     },
-    _updateApp: function(records, revisions){
+    _updateApp: function(){
+
+        if (this.down('rallygrid')){
+            this.down('rallygrid').destroy();
+        }
+
         var timebox = this.getContext().getTimeboxScope(),
             showWorkScope = this.down('#selectedShowWorkScope').getValue().showWorkScope,
             organizeBy = this.down('#selectedOrganizeBy').getValue().organizeBy;
+
         this.logger.log('_updateApp', showWorkScope, organizeBy);
 
         this._updateIterationStatus(timebox);
 
-        var parser = Ext.create('Rally.technicalservices.TimeboxHistoryParser',{}),
-            activityData = parser.getTimeboxActivityData(records, revisions);
-
-        var artifactFormattedIds = _.pluck(activityData, 'FormattedID');
-
-        this._fetchArtifactData(artifactFormattedIds).then({
-            success: function(artifacts){
-                var data = parser.aggregateArtifactData(activityData, artifacts);
-                this._buildGrid(data, organizeBy);
-            },
-            failure: function(msg){},
-            scope: this
-        });
-
-
+        var data = this.timeboxParser.getActivityData();
+        this._buildGrid(data, organizeBy);
 
     },
     _buildGrid: function(data, organizeBy){

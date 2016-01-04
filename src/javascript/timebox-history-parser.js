@@ -7,13 +7,18 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
 
     historyRecords: undefined,
     timeboxRecords: undefined,
-    prefixes: undefined,
-    aggregateBy: undefined,
+    activityData: undefined,
 
     constructor: function (config) {
         this.mixins.observable.constructor.call(this, config);
+
+        this.historyRecords = (config && config.historyRecords) || [];
+        this.timeboxRecords = (config && config.timeboxRecords) || [];
+        this.activityData = [];
+
+        this._parseHistories(this.timeboxRecords, this.historyRecords);
     },
-    getTimeboxActivityData: function(timeboxRecords, historyRecords){
+    _parseHistories: function(timeboxRecords, historyRecords){
         var activityData = [];
 
         for (var i = 0; i < timeboxRecords.length; i++) {
@@ -21,7 +26,7 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                 record = timeboxRecords[i];
 
             _.each(revisions, function (rev) {
-                console.log('revisions', rev);
+
                 var dataDate = Rally.util.DateTime.fromIsoString(rev.get('CreationDate')),
                     endDate = Rally.util.DateTime.fromIsoString(record.get('EndDate')),
                     startDate = Rally.util.DateTime.fromIsoString(record.get('StartDate')),
@@ -61,17 +66,25 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                 }
             }, this);
         }
-        return activityData;
+        this.activityData = activityData;
     },
-
-    aggregateArtifactData: function(activityData, artifacts){
+    getArtifactFormattedIDs: function(){
+        if (this.activityData.length === 0){
+            return [];
+        }
+        return _.pluck(this.activityData, 'FormattedID');
+    },
+    getActivityData: function(){
+        return this.activityData || [];
+    },
+    aggregateArtifactData: function(artifacts){
 
         var artifactHash = {};
         _.each(artifacts, function(a){
             artifactHash[a.get('FormattedID')] = a;
         });
 
-        _.each(activityData, function(obj){
+        _.each(this.activityData, function(obj){
             obj.isDeleted = false;
             var artifact = artifactHash[obj.FormattedID] || null;
             if (artifact){
@@ -84,7 +97,6 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                 obj.Name = "<i>Deleted</i>"
             }
         });
-        return activityData;
     },
     _getPrefix: function(formattedID){
         return formattedID.replace(/[0-9]/g, "");
