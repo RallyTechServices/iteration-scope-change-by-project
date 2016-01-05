@@ -99,6 +99,44 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
             }
         });
     },
+    getSummary: function(){
+        var countAdded = 0,
+            countRemoved = 0,
+            pointsAdded = 0,
+            pointsRemoved = 0,
+            hash = {
+                Added: {
+                    Count: 0,
+                    Points: 0
+                },
+                Removed: {
+                    Count: 0,
+                    Points: 0
+                }
+            };
+
+        _.each(this.activityData, function(obj){
+            hash[obj.Status].Count++;
+            hash[obj.Status].Points += obj.PlanEstimate;
+
+            if (obj.Status === 'Added'){
+                countAdded++;
+                pointsAdded += obj.PlanEstimate || 0;
+            }
+            if (obj.Status === 'Removed'){
+                countRemoved++;
+                pointsRemoved += obj.PlanEstimate || 0;
+            }
+
+        });
+
+        var data = [];
+        data.push({Description: 'Added', Count: countAdded, Points: pointsAdded});
+        data.push({Description: 'Removed', Count: countRemoved, Points: pointsRemoved});
+        data.push({Description: 'Net', Count: countAdded - countRemoved, Points: pointsAdded - pointsRemoved});
+
+        return hash;
+    },
     _getPrefix: function(formattedID){
         return formattedID.replace(/[0-9]/g, "");
     },

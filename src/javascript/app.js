@@ -23,21 +23,38 @@ Ext.define("iteration-scope-change-with-export", {
     _addComponents: function(timebox){
         this.logger.log('_addComponents', timebox);
 
-        var labelWidth = 100;
+        var labelWidth = 100,
+            boxWidth= 150;
 
-        if (!this.down('#iterationStatusTemplate')){
-            this.add(this._getIterationStatusTemplate());
-        };
-
-        if (!this.down('#selectedShowWorkScope')){
-            this.add(this._getShowWorkRadioGroupConfig(labelWidth));
-        }
-        if (!this.down('#selectedOrganizeBy')){
-            this.add(this._getOrganizeByType(labelWidth));
+        if (!this.down('#header-container')){
+            this.add({
+                xtype: 'container',
+                itemId: 'header-container',
+                layout: {type: 'hbox'},
+                items: [
+                    this._getIterationStatusTemplate(),
+                    this._getShowWorkRadioGroupConfig(labelWidth, boxWidth),
+                    this._getOrganizeByType(labelWidth, boxWidth),
+                    {
+                        xtype: 'container',
+                        flex: 1
+                    }
+                    ]
+            });
         }
 
     },
-    _getShowWorkRadioGroupConfig: function(labelWidth){
+    _getIterationStatusTemplate: function(){
+        var iterationTemplate = Ext.create('Rally.technicalservices.IterationStatusTemplate',{});
+        return {
+            xtype: 'container',
+            tpl: iterationTemplate,
+            itemId: 'iterationStatusTemplate',
+            flex: 1,
+            margin: 15
+        };
+    },
+    _getShowWorkRadioGroupConfig: function(labelWidth, boxWidth){
 
         return {
             xtype: 'radiogroup',
@@ -47,14 +64,17 @@ Ext.define("iteration-scope-change-with-export", {
             allowBlank: false,
             vertical: false,
             labelWidth: labelWidth,
-            margin: '10 0 10 0',
+            margin: '25 0 10 0',
             padding: 5,
+            flex: 1,
             labelAlign: 'right',
+            layout: 'fit',
             items: [{
                 boxLabel: "All",
                 inputValue: 'all',
                 name: 'showWorkScope',
                 disabled: false,
+               // columnWidth: boxWidth,
                 margin: '0 10 0 10',
                 checked: true
             },{
@@ -63,12 +83,14 @@ Ext.define("iteration-scope-change-with-export", {
                 inputValue: 'added',
                 disabled: false,
                 margin: '0 10 0 10',
+                //columnWidth: boxWidth,
                 checked: false
 
             },{
                 boxLabel: "Removed",
                 name: 'showWorkScope',
                 inputValue: 'removed',
+                //columnWidth: boxWidth,
                 disabled: false,
                 margin: '0 10 0 10',
                 checked: false
@@ -80,17 +102,19 @@ Ext.define("iteration-scope-change-with-export", {
             }
         };
     },
-    _getOrganizeByType: function(labelWidth){
+    _getOrganizeByType: function(labelWidth, boxWidth){
         return {
             xtype: 'radiogroup',
             fieldLabel: 'Organize By',
             itemId: 'selectedOrganizeBy',
             columns: 3,
+            align: 'left',
             allowBlank: false,
             vertical: false,
             labelWidth: labelWidth,
-            margin: '10 0 10 0',
+            margin: '25 0 10 0',
             padding: 5,
+            layout: 'fit',
             labelAlign: 'right',
             items: [{
                 boxLabel: "Project",
@@ -231,18 +255,20 @@ Ext.define("iteration-scope-change-with-export", {
             this.down('rallygrid').destroy();
         }
 
-        var timebox = this.getContext().getTimeboxScope(),
+        var timebox = this.getContext().getTimeboxScope().getRecord(),
             showWorkScope = this.down('#selectedShowWorkScope').getValue().showWorkScope,
             organizeBy = this.down('#selectedOrganizeBy').getValue().organizeBy;
 
-        this.logger.log('_updateApp', showWorkScope, organizeBy);
+        this.logger.log('_updateApp', showWorkScope, organizeBy, timebox);
 
-        this._updateIterationStatus(timebox);
+        var data = this.timeboxParser.getActivityData(),
+            summary = this.timeboxParser.getSummary();
 
-        var data = this.timeboxParser.getActivityData();
+        this.down('#iterationStatusTemplate').update(Ext.merge(summary, timebox.getData()));
+
         this._buildGrid(data, organizeBy);
-
     },
+
     _buildGrid: function(data, organizeBy){
         if (organizeBy !== 'Day' && organizeBy !== 'Project'){
             organizeBy = 'Day';
@@ -262,27 +288,29 @@ Ext.define("iteration-scope-change-with-export", {
                 groupHeaderTpl: '{name} ({rows.length})'
             }],
             showPagingToolbar: false,
+            emptyText: '<p>No Scope Changes found.</p>',
             store: store,
             columnCfgs: this._getColumnCfgs()
         });
 
+    },
+    _statusRenderer: function(value){
+        if (value === 'Added'){
+            return '<span class="added"><b>+</b></span>';
+        }
+        if (value === 'Removed'){
+            return '<span class="removed"><b>-</b></span>';
+        }
+        return value;
     },
     _getColumnCfgs: function(){
         return [{
             text: 'Status',
             dataIndex: 'Status',
             flex: 1,
-            renderer: function(value){
-                if (value === 'Added'){
-                    return '<span class="added"><b>+</b></span>';
-                }
-                if (value === 'Removed'){
-                    return '<span class="removed"><b>-</b></span>';
-                }
-                return '';
-            }
+            renderer: this._statusRenderer
             },{
-            text: 'FormattedID',
+            text: 'ID',
             dataIndex: 'FormattedID',
             flex: 1,
             renderer: function (value, metaData, record) {
@@ -316,7 +344,7 @@ Ext.define("iteration-scope-change-with-export", {
 
             }
         },{
-            text: 'PlanEstimate',
+            text: 'Est',
             dataIndex: 'PlanEstimate',
             flex: 1
         },{
@@ -344,16 +372,7 @@ Ext.define("iteration-scope-change-with-export", {
 
         return deferred;
     },
-    _getIterationStatusTemplate: function(){
-        var iterationTemplate = Ext.create('Rally.technicalservices.IterationStatusTemplate',{});
-        this.add({
-            xtype: 'container',
-            flex: 1,
-            tpl: iterationTemplate,
-            itemId: 'iterationStatusTemplate',
-            margin: 15
-        });
-    },
+
     _updateIterationStatus: function(timebox){
         var data = timebox && timebox.getRecord() && timebox.getRecord().getData() || {};
         this.down('#iterationStatusTemplate').update(data);

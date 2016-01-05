@@ -3,11 +3,11 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Jan 04 2016 13:59:03 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Jan 04 2016 17:57:38 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Jan 04 2016 13:59:03 GMT-0700 (MST)";
-        var CHECKSUM = 13332654111;
+        var APP_BUILD_DATE = "Mon Jan 04 2016 17:57:38 GMT-0700 (MST)";
+        var CHECKSUM = 16361852832;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -176,45 +176,6 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
-Ext.define('Rally.technicalservices.IterationScopeChange.AggregateDataTemplate',{
-    extend: 'Ext.XTemplate',
-
-    constructor: function(config) {
-        var templateConfig = [
-            '<tpl><table><tr>',
-            '<td width=20></td><td width=140></td><th width=50 align=left><b>Count</th>',
-            '<th width=100 align=left><b>{planEstimateLabel}</b></th>',
-            '<tr><td width=20 align=right><img src="/slm/mashup/1.11/images/plus.gif"></td>',
-            '<th width=140 align=left>Total Added </th>',
-            '<td width=50 align=left>{added}</td>',
-            '<td width=100 align=left>{[this.getAddedEstimate(values)]}',
-            '</td></tr><tr><td width=20 align=right><img src="/slm/mashup/1.11/images/minus.gif"></td>',
-            '<th width=140 align=left>   Total Removed </th>',
-            '<td width=50 align=left>{removed}</td>',
-            '<td width=100 align=left>{[this.getRemovedEst(values)]}',
-            '</td></tr><tr><td width=20 align=right></td>',
-            '<th width=140 align=left><b>Net </b></th>',
-            '<td width=50 align=left><b>{net}</b></td>',
-            '<td width=100 align=left><b>{[this.getNetEst(values)]}',
-            '</b></td></tr></table></tpl>',
-            {
-                getRemovedEst: function(recordData){
-                    return 30;
-                },
-                getAddedEst: function(recordData) {
-                    return 20;
-                },
-                getNetEst: function(recordData){
-                    return 10;
-                }
-            },
-            config
-        ];
-
-        return this.callParent(templateConfig);
-    }
-});
-
 Ext.define("iteration-scope-change-with-export", {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
@@ -240,21 +201,38 @@ Ext.define("iteration-scope-change-with-export", {
     _addComponents: function(timebox){
         this.logger.log('_addComponents', timebox);
 
-        var labelWidth = 100;
+        var labelWidth = 100,
+            boxWidth= 150;
 
-        if (!this.down('#iterationStatusTemplate')){
-            this.add(this._getIterationStatusTemplate());
-        };
-
-        if (!this.down('#selectedShowWorkScope')){
-            this.add(this._getShowWorkRadioGroupConfig(labelWidth));
-        }
-        if (!this.down('#selectedOrganizeBy')){
-            this.add(this._getOrganizeByType(labelWidth));
+        if (!this.down('#header-container')){
+            this.add({
+                xtype: 'container',
+                itemId: 'header-container',
+                layout: {type: 'hbox'},
+                items: [
+                    this._getIterationStatusTemplate(),
+                    this._getShowWorkRadioGroupConfig(labelWidth, boxWidth),
+                    this._getOrganizeByType(labelWidth, boxWidth),
+                    {
+                        xtype: 'container',
+                        flex: 1
+                    }
+                    ]
+            });
         }
 
     },
-    _getShowWorkRadioGroupConfig: function(labelWidth){
+    _getIterationStatusTemplate: function(){
+        var iterationTemplate = Ext.create('Rally.technicalservices.IterationStatusTemplate',{});
+        return {
+            xtype: 'container',
+            tpl: iterationTemplate,
+            itemId: 'iterationStatusTemplate',
+            flex: 1,
+            margin: 15
+        };
+    },
+    _getShowWorkRadioGroupConfig: function(labelWidth, boxWidth){
 
         return {
             xtype: 'radiogroup',
@@ -264,14 +242,17 @@ Ext.define("iteration-scope-change-with-export", {
             allowBlank: false,
             vertical: false,
             labelWidth: labelWidth,
-            margin: '10 0 10 0',
+            margin: '25 0 10 0',
             padding: 5,
+            flex: 1,
             labelAlign: 'right',
+            layout: 'fit',
             items: [{
                 boxLabel: "All",
                 inputValue: 'all',
                 name: 'showWorkScope',
                 disabled: false,
+               // columnWidth: boxWidth,
                 margin: '0 10 0 10',
                 checked: true
             },{
@@ -280,12 +261,14 @@ Ext.define("iteration-scope-change-with-export", {
                 inputValue: 'added',
                 disabled: false,
                 margin: '0 10 0 10',
+                //columnWidth: boxWidth,
                 checked: false
 
             },{
                 boxLabel: "Removed",
                 name: 'showWorkScope',
                 inputValue: 'removed',
+                //columnWidth: boxWidth,
                 disabled: false,
                 margin: '0 10 0 10',
                 checked: false
@@ -297,17 +280,19 @@ Ext.define("iteration-scope-change-with-export", {
             }
         };
     },
-    _getOrganizeByType: function(labelWidth){
+    _getOrganizeByType: function(labelWidth, boxWidth){
         return {
             xtype: 'radiogroup',
             fieldLabel: 'Organize By',
             itemId: 'selectedOrganizeBy',
             columns: 3,
+            align: 'left',
             allowBlank: false,
             vertical: false,
             labelWidth: labelWidth,
-            margin: '10 0 10 0',
+            margin: '25 0 10 0',
             padding: 5,
+            layout: 'fit',
             labelAlign: 'right',
             items: [{
                 boxLabel: "Project",
@@ -448,18 +433,20 @@ Ext.define("iteration-scope-change-with-export", {
             this.down('rallygrid').destroy();
         }
 
-        var timebox = this.getContext().getTimeboxScope(),
+        var timebox = this.getContext().getTimeboxScope().getRecord(),
             showWorkScope = this.down('#selectedShowWorkScope').getValue().showWorkScope,
             organizeBy = this.down('#selectedOrganizeBy').getValue().organizeBy;
 
-        this.logger.log('_updateApp', showWorkScope, organizeBy);
+        this.logger.log('_updateApp', showWorkScope, organizeBy, timebox);
 
-        this._updateIterationStatus(timebox);
+        var data = this.timeboxParser.getActivityData(),
+            summary = this.timeboxParser.getSummary();
 
-        var data = this.timeboxParser.getActivityData();
+        this.down('#iterationStatusTemplate').update(Ext.merge(summary, timebox.getData()));
+
         this._buildGrid(data, organizeBy);
-
     },
+
     _buildGrid: function(data, organizeBy){
         if (organizeBy !== 'Day' && organizeBy !== 'Project'){
             organizeBy = 'Day';
@@ -479,27 +466,29 @@ Ext.define("iteration-scope-change-with-export", {
                 groupHeaderTpl: '{name} ({rows.length})'
             }],
             showPagingToolbar: false,
+            emptyText: '<p>No Scope Changes found.</p>',
             store: store,
             columnCfgs: this._getColumnCfgs()
         });
 
+    },
+    _statusRenderer: function(value){
+        if (value === 'Added'){
+            return '<span class="added"><b>+</b></span>';
+        }
+        if (value === 'Removed'){
+            return '<span class="removed"><b>-</b></span>';
+        }
+        return value;
     },
     _getColumnCfgs: function(){
         return [{
             text: 'Status',
             dataIndex: 'Status',
             flex: 1,
-            renderer: function(value){
-                if (value === 'Added'){
-                    return '<span class="added">+</span>';
-                }
-                if (value === 'Removed'){
-                    return '<span class="removed">-</span>';
-                }
-                return '';
-            }
+            renderer: this._statusRenderer
             },{
-            text: 'FormattedID',
+            text: 'ID',
             dataIndex: 'FormattedID',
             flex: 1,
             renderer: function (value, metaData, record) {
@@ -533,7 +522,7 @@ Ext.define("iteration-scope-change-with-export", {
 
             }
         },{
-            text: 'PlanEstimate',
+            text: 'Est',
             dataIndex: 'PlanEstimate',
             flex: 1
         },{
@@ -561,16 +550,7 @@ Ext.define("iteration-scope-change-with-export", {
 
         return deferred;
     },
-    _getIterationStatusTemplate: function(){
-        var iterationTemplate = Ext.create('Rally.technicalservices.IterationStatusTemplate',{});
-        this.add({
-            xtype: 'container',
-            flex: 1,
-            tpl: iterationTemplate,
-            itemId: 'iterationStatusTemplate',
-            margin: 15
-        });
-    },
+
     _updateIterationStatus: function(timebox){
         var data = timebox && timebox.getRecord() && timebox.getRecord().getData() || {};
         this.down('#iterationStatusTemplate').update(data);
@@ -603,22 +583,32 @@ Ext.define("iteration-scope-change-with-export", {
     }
 });
 
-Ext.define('Rally.technicalservices.IterationScopeChangeConfiguration',{
-    singleton: true,
-
-    aggregateByOptions: {
-        DAY: 'day',
-        PROJECT: 'project'
-    }
-});
-
 Ext.define('Rally.technicalservices.IterationStatusTemplate',{
     extend: 'Ext.XTemplate',
 
     constructor: function(config) {
         var templateConfig = [
             '<tpl if="this.isNotEmpty(values)">',
-            '<div class="iterationinfo">{Name} ({[this.getDuration(values)]} Days, {[this.getStatus(values)]})</div>',
+            '<div class="iterationinfo"><b>{Name} ({[this.getDuration(values)]} Days, {[this.getStatus(values)]})</b></div>',
+            '<table class="summary"><tr>',
+            '<td width=100 border="0"></td>',
+            '<th width=100 align=right class="summary"><b>Count</b></th>',
+            '<th width=100 align=right class="summary"><b>Points</b></th>',
+            '</tr>',
+            '<tr>',
+            '<td width=100 align=right><span class="added"><b>+</b></span>&nbsp;Added</td>',
+            '<td width=100 align=right>{[this.getAddedCount(values)]}</td>',
+            '<td width=100 align=right>{[this.getAddedPoints(values)]}',
+            '</td>',
+            '</tr><tr>',
+            '<td width=100 align=right><span class="removed"><b>-</b></span>&nbsp;Removed</td>',
+            '<td width=100 align=right>{[this.getRemovedCount(values)]}</td>',
+            '<td width=100 align=right>{[this.getRemovedPoints(values)]}</td>',
+            '</tr><tr>',
+            '<th width=100 align=right class="net summary"><b>Net</b></th>',
+            '<td width=100 align=right><b>{[this.getNetCount(values)]}</b></td>',
+            '<td width=100 align=right><b>{[this.getNetPoints(values)]}</b></td>',
+            '</tr></table>',
             '</tpl>',
             {
                 isNotEmpty: function(recordData){
@@ -646,6 +636,45 @@ Ext.define('Rally.technicalservices.IterationStatusTemplate',{
                 },
                 getDuration: function(recordData){
                     return Rally.util.DateTime.getDifference(recordData.EndDate, recordData.StartDate, 'day');
+                },
+                getRemovedCount: function(recordData){
+                    return recordData.Removed.Count;
+                },
+                getRemovedPoints: function(recordData){
+                    return recordData.Removed.Points;
+                },
+                getAddedCount: function(recordData){
+                    return recordData.Added.Count;
+                },
+                getAddedPoints: function(recordData){
+                    return recordData.Added.Points;
+                },
+                getNetCount: function(recordData){
+                    var net = recordData.Added.Count - recordData.Removed.Count;
+                    if (net > 0){
+                        return this.getAddedSpan(net);
+                    }
+                    if (net === 0){
+                        return '0';
+                    }
+                    return this.getRemovedSpan(net);
+
+                },
+                getNetPoints: function(recordData){
+                    var net = recordData.Added.Points - recordData.Removed.Points;
+                    if (net > 0){
+                        return this.getAddedSpan(net);
+                    }
+                    if (net === 0){
+                        return '0';
+                    }
+                    return this.getRemovedSpan(net);
+                },
+                getAddedSpan: function(additionalText){
+                    return Ext.String.format('<span class="added"><b>+</b></span>&nbsp;{0}',additionalText || '');
+                },
+                getRemovedSpan: function(additionalText){
+                    return Ext.String.format('<span class="removed"><b>-</b></span>&nbsp;{0}',additionalText || '');
                 }
             },
             config
@@ -756,6 +785,44 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
             }
         });
     },
+    getSummary: function(){
+        var countAdded = 0,
+            countRemoved = 0,
+            pointsAdded = 0,
+            pointsRemoved = 0,
+            hash = {
+                Added: {
+                    Count: 0,
+                    Points: 0
+                },
+                Removed: {
+                    Count: 0,
+                    Points: 0
+                }
+            };
+
+        _.each(this.activityData, function(obj){
+            hash[obj.Status].Count++;
+            hash[obj.Status].Points += obj.PlanEstimate;
+
+            if (obj.Status === 'Added'){
+                countAdded++;
+                pointsAdded += obj.PlanEstimate || 0;
+            }
+            if (obj.Status === 'Removed'){
+                countRemoved++;
+                pointsRemoved += obj.PlanEstimate || 0;
+            }
+
+        });
+
+        var data = [];
+        data.push({Description: 'Added', Count: countAdded, Points: pointsAdded});
+        data.push({Description: 'Removed', Count: countRemoved, Points: pointsRemoved});
+        data.push({Description: 'Net', Count: countAdded - countRemoved, Points: pointsAdded - pointsRemoved});
+
+        return hash;
+    },
     _getPrefix: function(formattedID){
         return formattedID.replace(/[0-9]/g, "");
     },
@@ -824,8 +891,8 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
 .iterationinfo{
     color: #222222;
     font-family: ProximaNovaSemiBold, Helvetica, Arial;
-    font-size: 12px;
-    padding-top: 5px;
+    font-size: 14px;
+    padding: 5px;
 }
 
 .added {
@@ -841,6 +908,29 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
     font-size: 14px;
     padding-top: 5px;
     font-weight: bold;
+}
+.net {
+    color: #222222;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    padding-top: 5px;
+    font-weight: bold;
+}
+table.summary {
+    border-style: solid;
+    border-width: 1px;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 11px;
+}
+th.summary {
+    text-transform: uppercase;
+}
+
+.x-grid-empty {
+  text-align: center;
+    color: #666666;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding: 5px;
 }
     </style>
 
