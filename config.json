@@ -1,6 +1,6 @@
 {
     "name": "Iteration Scope Change",
-    "className": "iteration-scope-change-with-export",
+    "className": "iteration-scope-change-by-project",
     "server": "https://demo-west.rallydev.com",
     "sdk": "2.0",
     "apiKey": "_PUT_APIKEY_HERE_"

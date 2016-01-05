@@ -1,4 +1,4 @@
-Ext.define("iteration-scope-change-with-export", {
+Ext.define("iteration-scope-change-by-project", {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
@@ -33,11 +33,11 @@ Ext.define("iteration-scope-change-with-export", {
                 layout: {type: 'hbox'},
                 items: [
                     this._getIterationStatusTemplate(),
-                    this._getShowWorkRadioGroupConfig(labelWidth, boxWidth),
+                 //   this._getShowWorkRadioGroupConfig(labelWidth, boxWidth),
                     this._getOrganizeByType(labelWidth, boxWidth),
                     {
                         xtype: 'container',
-                        flex: 1
+                        flex: 2
                     }
                     ]
             });
@@ -108,7 +108,9 @@ Ext.define("iteration-scope-change-with-export", {
             fieldLabel: 'Organize By',
             itemId: 'selectedOrganizeBy',
             columns: 3,
-            align: 'left',
+            style: {
+                align: 'left'
+            },
             allowBlank: false,
             vertical: false,
             labelWidth: labelWidth,
@@ -256,7 +258,7 @@ Ext.define("iteration-scope-change-with-export", {
         }
 
         var timebox = this.getContext().getTimeboxScope().getRecord(),
-            showWorkScope = this.down('#selectedShowWorkScope').getValue().showWorkScope,
+            showWorkScope = 'all', // this.down('#selectedShowWorkScope').getValue().showWorkScope,
             organizeBy = this.down('#selectedOrganizeBy').getValue().organizeBy;
 
         this.logger.log('_updateApp', showWorkScope, organizeBy, timebox);
