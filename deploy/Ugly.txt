@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iteration Scope Change</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Mon Jan 04 2016 18:02:56 GMT-0700 (MST) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Mon Jan 04 2016 18:02:56 GMT-0700 (MST)";
+        var CHECKSUM = [%= checksum %];
+    </script>
+    
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+            
+            
+               Rally.launchApp('iteration-scope-change-by-project', {
+                   name: 'Iteration Scope Change'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.iterationinfo{
+    color: #222222;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.added {
+    color: green;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
+}
+.removed {
+    color: red;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding-top: 5px;
+    font-weight: bold;
+}
+.net {
+    color: #222222;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    padding-top: 5px;
+    font-weight: bold;
+}
+table.summary {
+    border-style: solid;
+    border-width: 1px;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 11px;
+}
+th.summary {
+    text-transform: uppercase;
+}
+
+.x-grid-empty {
+  text-align: center;
+    color: #666666;
+    font-family: ProximaNovaSemiBold, Helvetica, Arial;
+    font-size: 14px;
+    padding: 5px;
+}
+    </style>
+
+</head>
+<body></body>
+</html>
