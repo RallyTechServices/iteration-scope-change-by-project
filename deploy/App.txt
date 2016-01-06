@@ -3,11 +3,11 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Jan 04 2016 18:02:55 GMT-0700 (MST) -->
+    <!--  Build Date: Tue Jan 05 2016 17:10:16 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Jan 04 2016 18:02:55 GMT-0700 (MST)";
-        var CHECKSUM = 16387173685;
+        var APP_BUILD_DATE = "Tue Jan 05 2016 17:10:16 GMT-0700 (MST)";
+        var CHECKSUM = 16302503442;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -252,7 +252,6 @@ Ext.define("iteration-scope-change-by-project", {
                 inputValue: 'all',
                 name: 'showWorkScope',
                 disabled: false,
-               // columnWidth: boxWidth,
                 margin: '0 10 0 10',
                 checked: true
             },{
@@ -261,14 +260,12 @@ Ext.define("iteration-scope-change-by-project", {
                 inputValue: 'added',
                 disabled: false,
                 margin: '0 10 0 10',
-                //columnWidth: boxWidth,
                 checked: false
 
             },{
                 boxLabel: "Removed",
                 name: 'showWorkScope',
                 inputValue: 'removed',
-                //columnWidth: boxWidth,
                 disabled: false,
                 margin: '0 10 0 10',
                 checked: false
@@ -465,7 +462,8 @@ Ext.define("iteration-scope-change-by-project", {
             xtype: 'rallygrid',
             features: [{
                 ftype: 'groupingsummary',
-                groupHeaderTpl: '{name} ({rows.length})'
+                groupHeaderTpl: '{name} ({rows.length})',
+                startCollapsed: true
             }],
             showPagingToolbar: false,
             emptyText: '<p>No Scope Changes found.</p>',
