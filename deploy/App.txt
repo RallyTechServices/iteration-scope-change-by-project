@@ -3,11 +3,11 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jan 05 2016 17:09:50 GMT-0700 (MST) -->
+    <!--  Build Date: Tue Jan 05 2016 17:10:16 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jan 05 2016 17:09:50 GMT-0700 (MST)";
-        var CHECKSUM = 16302505758;
+        var APP_BUILD_DATE = "Tue Jan 05 2016 17:10:16 GMT-0700 (MST)";
+        var CHECKSUM = 16302503442;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
