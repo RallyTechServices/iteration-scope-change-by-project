@@ -74,7 +74,6 @@ Ext.define("iteration-scope-change-by-project", {
                 inputValue: 'all',
                 name: 'showWorkScope',
                 disabled: false,
-               // columnWidth: boxWidth,
                 margin: '0 10 0 10',
                 checked: true
             },{
@@ -83,14 +82,12 @@ Ext.define("iteration-scope-change-by-project", {
                 inputValue: 'added',
                 disabled: false,
                 margin: '0 10 0 10',
-                //columnWidth: boxWidth,
                 checked: false
 
             },{
                 boxLabel: "Removed",
                 name: 'showWorkScope',
                 inputValue: 'removed',
-                //columnWidth: boxWidth,
                 disabled: false,
                 margin: '0 10 0 10',
                 checked: false
@@ -287,7 +284,8 @@ Ext.define("iteration-scope-change-by-project", {
             xtype: 'rallygrid',
             features: [{
                 ftype: 'groupingsummary',
-                groupHeaderTpl: '{name} ({rows.length})'
+                groupHeaderTpl: '{name} ({rows.length})',
+                startCollapsed: true
             }],
             showPagingToolbar: false,
             emptyText: '<p>No Scope Changes found.</p>',
