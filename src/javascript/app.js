@@ -362,7 +362,8 @@ Ext.define("iteration-scope-change-by-project", {
             models: ['Defect', 'DefectSuite', 'UserStory','TestSet'],
             fetch: ['FormattedID','Name','Parent','PortfolioItem','Requirement','PlanEstimate'],
             filters: filters,
-            limit: 'Infinity'
+            limit: 'Infinity',
+            context: { project: null }
         }).load({
             callback: function(records, operation){
                 deferred.resolve(records);

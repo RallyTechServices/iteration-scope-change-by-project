@@ -3,11 +3,11 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jan 05 2016 17:10:16 GMT-0700 (MST) -->
+    <!--  Build Date: Tue Jan 19 2016 08:29:28 GMT-0700 (MST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jan 05 2016 17:10:16 GMT-0700 (MST)";
-        var CHECKSUM = 16302503442;
+        var APP_BUILD_DATE = "Tue Jan 19 2016 08:29:28 GMT-0700 (MST)";
+        var CHECKSUM = 16344667395;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -540,7 +540,8 @@ Ext.define("iteration-scope-change-by-project", {
             models: ['Defect', 'DefectSuite', 'UserStory','TestSet'],
             fetch: ['FormattedID','Name','Parent','PortfolioItem','Requirement','PlanEstimate'],
             filters: filters,
-            limit: 'Infinity'
+            limit: 'Infinity',
+            context: { project: null }
         }).load({
             callback: function(records, operation){
                 deferred.resolve(records);
