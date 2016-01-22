@@ -56,13 +56,13 @@ Ext.define('Rally.technicalservices.IterationStatusTemplate',{
                     return recordData.Removed.Count;
                 },
                 getRemovedPoints: function(recordData){
-                    return recordData.Removed.Points;
+                    return recordData.Removed.Points.toFixed(1);
                 },
                 getAddedCount: function(recordData){
                     return recordData.Added.Count;
                 },
                 getAddedPoints: function(recordData){
-                    return recordData.Added.Points;
+                    return recordData.Added.Points.toFixed(1);
                 },
                 getNetCount: function(recordData){
                     var net = recordData.Added.Count - recordData.Removed.Count;
@@ -76,7 +76,7 @@ Ext.define('Rally.technicalservices.IterationStatusTemplate',{
 
                 },
                 getNetPoints: function(recordData){
-                    var net = recordData.Added.Points - recordData.Removed.Points;
+                    var net = Number(recordData.Added.Points - recordData.Removed.Points).toFixed(1);
                     if (net > 0){
                         return this.getAddedSpan(net);
                     }

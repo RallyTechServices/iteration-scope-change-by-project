@@ -354,19 +354,54 @@ Ext.define("iteration-scope-change-by-project", {
         }];
     },
     _fetchArtifactData: function(artifactFormattedIds){
-        var deferred = Ext.create('Deft.Deferred'),
-            filters = Rally.data.wsapi.Filter.or(_.map(artifactFormattedIds, function(fid){ return {property: 'FormattedID', value: fid }; }));
+        var deferred = Ext.create('Deft.Deferred');
 
+        var chunked_filters = [], idx = -1, chunkSize = 10;
 
-        Ext.create('Rally.data.wsapi.artifact.Store', {
-            models: ['Defect', 'DefectSuite', 'UserStory','TestSet'],
-            fetch: ['FormattedID','Name','Parent','PortfolioItem','Requirement','PlanEstimate'],
-            filters: filters,
-            limit: 'Infinity',
-            context: { project: null }
-        }).load({
-            callback: function(records, operation){
+        for (var i=0; i<artifactFormattedIds.length; i++){
+            if (i % chunkSize === 0){
+                idx++;
+                chunked_filters.push([]);
+            }
+            chunked_filters[idx].push({property: 'FormattedID', value: artifactFormattedIds[i] });
+        }
+
+        var promises = [];
+        _.each(chunked_filters, function(chunk){
+            promises.push(this._fetchChunk({
+                models: ['Defect', 'DefectSuite', 'UserStory','TestSet'],
+                fetch: ['FormattedID','Name','Parent','PortfolioItem','Requirement','PlanEstimate'],
+                filters: Rally.data.wsapi.Filter.or(chunk),
+                limit: 'Infinity',
+                context: { project: null }
+            }));
+        }, this);
+
+        Deft.Promise.all(promises).then({
+            success: function(results){
+                var records = _.flatten(results);
                 deferred.resolve(records);
+            },
+            failure: function(msg){
+                deferred.reject(msg);
+            },
+            scope: this
+        });
+
+
+        return deferred;
+    },
+    _fetchChunk: function(config){
+        var deferred = Ext.create('Deft.Deferred');
+
+        Ext.create('Rally.data.wsapi.artifact.Store', config).load({
+            callback: function(records, operation){
+                if (operation.wasSuccessful()){
+                    deferred.resolve(records);
+                } else {
+                    deferred.reject(Ext.String.format("Error loading artifacts with filter [{0}]: {1}", config.filters.toString(), operation.error.errors.join(',')));
+                }
+
             },
             scope: this
         });
