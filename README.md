@@ -1,5 +1,14 @@
 #Iteration Scope Change
 
+A re-write with App SDK 2.0 of the Iteration Scope Change app from the App catalog with the addition of the following:
+* an option to organize iteration scope changes by Project or Day (original option) 
+* support for an iteration scoped dashboard
+* export functionality  
+
+![ScreenShot](/images/iteration-scope-change-by-project.png)
+
+This app parses the revision history to determine scope changes and does not require the lookback API.  
+
 ## Development Notes
 
 ### First Load
