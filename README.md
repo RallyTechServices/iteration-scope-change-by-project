@@ -5,7 +5,7 @@ A re-write with App SDK 2.0 of the Iteration Scope Change app from the App catal
 * support for an iteration scoped dashboard
 * export functionality  
 
-![ScreenShot](/images/iteration-scope-change-by-project.png)
+![ScreenShot](/images/iteration-scope-change.png)
 
 This app parses the revision history to determine scope changes and does not require the lookback API.  
 
