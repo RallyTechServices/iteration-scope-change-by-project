@@ -4,6 +4,12 @@ Ext.define("iteration-scope-change-by-project", {
     logger: new Rally.technicalservices.Logger(),
     scopeType: 'iteration',
 
+    config: {
+        defaultSettings: {
+            hoursOffset: 0
+        }
+    },
+
     onTimeboxScopeChange: function(timebox){
         this.logger.log('onTimeboxScopeChange', timebox.getQueryFilter().toString());
         this.getContext().setTimeboxScope(timebox);
@@ -38,6 +44,13 @@ Ext.define("iteration-scope-change-by-project", {
                     {
                         xtype: 'container',
                         flex: 2
+                    },{
+                        xtype: 'rallybutton',
+                        text: 'Export',
+                        listeners: {
+                            scope: this,
+                            click: this._export
+                        }
                     }
                     ]
             });
@@ -197,7 +210,8 @@ Ext.define("iteration-scope-change-by-project", {
                 this.logger.log('_loadScopeRevisions success', revisions);
                 this.timeboxParser = Ext.create('Rally.technicalservices.TimeboxHistoryParser',{
                     timeboxRecords: records,
-                    historyRecords: revisions
+                    historyRecords: revisions,
+                    hoursOffset: this.getSetting('hoursOffset')
                 });
                 var formattedIDs = this.timeboxParser.getArtifactFormattedIDs();
 
@@ -391,6 +405,59 @@ Ext.define("iteration-scope-change-by-project", {
 
         return deferred;
     },
+    _export: function(){
+        var file_util = Ext.create('Rally.technicalservices.FileUtilities',{});
+
+        var csv = file_util.getCSVFromData(this, this.down('rallygrid'),this._getExportColumnCfgs());
+        file_util.saveCSVToFile(csv, 'export.csv');
+    },
+    _getExportColumnCfgs: function(){
+        return [{
+            text: 'Status',
+            dataIndex: 'Status'
+        },{
+            text: 'ID',
+            dataIndex: 'FormattedID'
+        },{
+            text: 'Name',
+            dataIndex: 'Name'
+        },{
+            text: 'Project',
+            dataIndex: 'Project'
+        },{
+            text: 'Day',
+            dataIndex: 'Day'
+        },{
+            text: 'Parent ID',
+            dataIndex: 'Parent',
+            renderer: function (value, metaData, record) {
+                if (record.get('Parent')){
+                    return record.get('FormattedID');
+                }
+                return '';
+
+            }
+        },{
+            text: 'Parent Name',
+            dataIndex: 'Parent',
+            renderer: function (value, metaData, record) {
+                if (record.get('Parent')){
+                    return record.get('Name');
+                }
+                return '';
+
+            }
+        },{
+            text: 'Est',
+            dataIndex: 'PlanEstimate',
+            flex: 1
+        },{
+            text: 'User',
+            dataIndex: 'User',
+            flex: 1
+        }];
+    },
+
     _fetchChunk: function(config){
         var deferred = Ext.create('Deft.Deferred');
 
@@ -413,6 +480,16 @@ Ext.define("iteration-scope-change-by-project", {
         var data = timebox && timebox.getRecord() && timebox.getRecord().getData() || {};
         this.down('#iterationStatusTemplate').update(data);
 
+    },
+    getSettingsFields: function(){
+        return [{
+            xtype: 'rallynumberfield',
+            minValue: 0,
+            name: 'hoursOffset',
+            fieldLabel: 'Ignore scope changes for this number of hours after the iteration begins:',
+            labelWidth: 400,
+            labelAlign: 'right'
+        }];
     },
     getOptions: function() {
         return [
