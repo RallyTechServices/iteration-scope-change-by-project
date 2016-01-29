@@ -16,9 +16,11 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
         this.timeboxRecords = (config && config.timeboxRecords) || [];
         this.activityData = [];
 
-        this._parseHistories(this.timeboxRecords, this.historyRecords);
+        var hoursOffset = config.hoursOffset || 0;
+
+        this._parseHistories(this.timeboxRecords, this.historyRecords, hoursOffset);
     },
-    _parseHistories: function(timeboxRecords, historyRecords){
+    _parseHistories: function(timeboxRecords, historyRecords, hoursOffset){
         var activityData = [];
 
         for (var i = 0; i < timeboxRecords.length; i++) {
@@ -32,6 +34,10 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                     startDate = Rally.util.DateTime.fromIsoString(record.get('StartDate')),
                     description = rev.get('Description');
 
+                if (hoursOffset > 0){
+                    var startHours = startDate.getHours()
+                    startDate.setHours(startHours + hoursOffset);
+                }
                 endDate.setHours(23, 59, 59, 0);
 
                 if (/Scheduled|Unscheduled/.test(description) &&
