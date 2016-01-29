@@ -94,7 +94,7 @@ Ext.define('Rally.technicalservices.FileUtilities', {
         var csv = [];
         csv.push('"' + headers.join('","') + '"');
         _.each(data, function(item){
-           
+
             var cell_values = [];
             _.each(columns, function(c){
                 var cell_value = item.get(c.dataIndex);

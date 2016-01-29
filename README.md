@@ -9,6 +9,12 @@ A re-write with App SDK 2.0 of the Iteration Scope Change app from the App catal
 
 This app parses the revision history to determine scope changes and does not require the lookback API.  
 
+App Settings include an Hour offset field.  If this field is greater than 0, then it will ignore any changes 
+that are made within this number of hours after the iteration begins.  
+
+This setting was added to accomodate sprint teams that might plan on the first day of the sprint and do not 
+want to see those scope changes included in this report.  
+
 ## Development Notes
 
 ### First Load
