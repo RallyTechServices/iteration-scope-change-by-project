@@ -247,6 +247,7 @@ Ext.define("iteration-scope-change-by-project", {
         var store = Ext.create('Rally.data.wsapi.Store',{
             model:'Revision',
             filters: filter,
+            limit: Infinity,
             fetch: ['Description','CreationDate','User'],
             sorters: [{property:'CreationDate',direction:'ASC'}]
         });
