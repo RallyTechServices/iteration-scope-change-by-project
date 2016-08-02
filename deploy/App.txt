@@ -3,11 +3,11 @@
 <head>
     <title>Iteration Scope Change</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Fri Jan 29 2016 13:55:34 GMT-0700 (MST) -->
+    <!--  Build Date: Mon Aug 01 2016 20:31:28 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Fri Jan 29 2016 13:55:34 GMT-0700 (MST)";
-        var CHECKSUM = 51929094374;
+        var APP_BUILD_DATE = "Mon Aug 01 2016 20:31:28 GMT-0700 (PDT)";
+        var CHECKSUM = 51977256805;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -692,7 +692,7 @@ Ext.define('Rally.technicalservices.FileUtilities', {
         var csv = [];
         csv.push('"' + headers.join('","') + '"');
         _.each(data, function(item){
-           
+
             var cell_values = [];
             _.each(columns, function(c){
                 var cell_value = item.get(c.dataIndex);
@@ -960,6 +960,7 @@ Ext.define("iteration-scope-change-by-project", {
         var store = Ext.create('Rally.data.wsapi.Store',{
             model:'Revision',
             filters: filter,
+            limit: Infinity,
             fetch: ['Description','CreationDate','User'],
             sorters: [{property:'CreationDate',direction:'ASC'}]
         });
