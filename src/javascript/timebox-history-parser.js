@@ -38,7 +38,7 @@ Ext.define('Rally.technicalservices.TimeboxHistoryParser',{
                     var startHours = startDate.getHours()
                     startDate.setHours(startHours + hoursOffset);
                 }
-                endDate.setHours(23, 59, 59, 0);
+                //endDate.setHours(23, 59, 59, 0);
 
                 if (/Scheduled|Unscheduled/.test(description) &&
                     dataDate >= startDate && dataDate <= endDate) {
