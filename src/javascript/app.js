@@ -433,7 +433,8 @@ Ext.define("iteration-scope-change-by-project", {
             dataIndex: 'Parent',
             renderer: function (value, metaData, record) {
                 if (record.get('Parent')){
-                    return record.get('FormattedID');
+									return record.data.Parent.FormattedID;
+//                    return record.get('FormattedID');
                 }
                 return '';
 
@@ -443,7 +444,8 @@ Ext.define("iteration-scope-change-by-project", {
             dataIndex: 'Parent',
             renderer: function (value, metaData, record) {
                 if (record.get('Parent')){
-                    return record.get('Name');
+									return record.data.Parent.Name;
+//                    return record.get('Name');
                 }
                 return '';
 
